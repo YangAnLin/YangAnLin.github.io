@@ -22,18 +22,20 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"yanganlin.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+    var CONFIG = {"hostname":"yanganlin.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta property="og:type" content="article">
+  <meta name="description" content="12345678# 开启事务,设定事务的开启位置，此指令执行后，后续的所有指令均加入到事务中multi# 执行提交事务,加入事务的命令暂时到任务队列中，并没有立即执行，只有执行exec命令才开始执行exec# 取消事务,终止当前事务定义，发生在multi之后，exec之前discard  事务的工作流程 事务的注意事项 语法错误指命令书写格式有误 处理结果如果定义的事务中所包含的命令存在语法错误">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Redis事务">
 <meta property="og:url" content="https://yanganlin.com/2020/08/14/68.Redis%E4%BA%8B%E5%8A%A1/index.html">
 <meta property="og:site_name" content="木木在唱歌">
+<meta property="og:description" content="12345678# 开启事务,设定事务的开启位置，此指令执行后，后续的所有指令均加入到事务中multi# 执行提交事务,加入事务的命令暂时到任务队列中，并没有立即执行，只有执行exec命令才开始执行exec# 取消事务,终止当前事务定义，发生在multi之后，exec之前discard  事务的工作流程 事务的注意事项 语法错误指命令书写格式有误 处理结果如果定义的事务中所包含的命令存在语法错误">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://raw.githubusercontent.com/YangAnLin/images/master/20200826195042.jpeg">
 <meta property="og:image" content="https://raw.githubusercontent.com/YangAnLin/images/master/20200826195056.png">
 <meta property="article:published_time" content="2020-08-13T16:00:00.000Z">
-<meta property="article:modified_time" content="2020-12-26T12:01:50.717Z">
+<meta property="article:modified_time" content="2020-12-31T13:11:11.548Z">
 <meta property="article:author" content="Anthony">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/YangAnLin/images/master/20200826195042.jpeg">
@@ -268,20 +270,6 @@
   </span>
   
   
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2020/08/14/68.Redis%E4%BA%8B%E5%8A%A1/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/08/14/68.Redis%E4%BA%8B%E5%8A%A1/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
 
         </div>
       </header>
@@ -293,8 +281,6 @@
 
       
         <p><img src="https://raw.githubusercontent.com/YangAnLin/images/master/20200826195042.jpeg" alt=""></p>
-<a id="more"></a> 
-
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 开启事务,设定事务的开启位置，此指令执行后，后续的所有指令均加入到事务中</span></span><br><span class="line">multi</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 执行提交事务,加入事务的命令暂时到任务队列中，并没有立即执行，只有执行<span class="built_in">exec</span>命令才开始执行</span></span><br><span class="line">exec</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 取消事务,终止当前事务定义，发生在multi之后，<span class="built_in">exec</span>之前</span></span><br><span class="line">discard</span><br></pre></td></tr></table></figure>
 
 <h2 id="事务的工作流程"><a href="#事务的工作流程" class="headerlink" title="事务的工作流程"></a>事务的工作流程</h2><p><img src="https://raw.githubusercontent.com/YangAnLin/images/master/20200826195056.png" alt=""></p>
@@ -354,26 +340,13 @@
 
           </div>
           
-      <div class="tabs tabs-comment">
-        <ul class="nav-tabs">
-            <li class="tab"><a href="#comment-disqus">disqus</a></li>
-            <li class="tab"><a href="#comment-valine">valine</a></li>
-        </ul>
-        <div class="tab-content">
-            <div class="tab-pane disqus" id="comment-disqus">
-              
+    
   <div class="comments">
     <div id="disqus_thread">
       <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
     </div>
   </div>
   
-            </div>
-            <div class="tab-pane valine" id="comment-valine">
-              <div class="comments" id="valine-comments"></div>
-            </div>
-        </div>
-      </div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -480,7 +453,7 @@
   </span>
   <span class="author" itemprop="copyrightHolder">Anthony</span>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
   </div>
 
         
@@ -508,7 +481,7 @@
 <script src="/js/motion.js"></script>
 
 
-<script src="/js/schemes/muse.js"></script>
+<script src="/js/schemes/pisces.js"></script>
 
 
 <script src="/js/next-boot.js"></script>
@@ -606,35 +579,6 @@
       (d.head || d.body).appendChild(s);
     }
   });
-</script>
-
-
-<script>
-NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
-  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
-    var GUEST = ['nick', 'mail', 'link'];
-    var guest = 'nick,mail,link';
-    guest = guest.split(',').filter(item => {
-      return GUEST.includes(item);
-    });
-    new Valine({
-      el         : '#valine-comments',
-      verify     : false,
-      notify     : true,
-      appId      : 'vjuDbu6NurR8quggYWOD14w6-gzGzoHsz',
-      appKey     : 'uceYrDYYqitfkh2G5I5uuCLu',
-      placeholder: "Just go go",
-      avatar     : 'mm',
-      meta       : guest,
-      pageSize   : '10' || 10,
-      visitor    : false,
-      lang       : '' || 'zh-cn',
-      path       : location.pathname,
-      recordIP   : true,
-      serverURLs : ''
-    });
-  }, window.Valine);
-});
 </script>
 
 </body>
