@@ -212,6 +212,112 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanganlin.com/2020/08/14/68.Redis%E4%BA%8B%E5%8A%A1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Anthony">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="木木在唱歌">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/14/68.Redis%E4%BA%8B%E5%8A%A1/" class="post-title-link" itemprop="url">Redis事务</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-14 00:00:00" itemprop="dateCreated datePublished" datetime="2020-08-14T00:00:00+08:00">2020-08-14</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index"><span itemprop="name">Redis</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2020/08/14/68.Redis%E4%BA%8B%E5%8A%A1/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/08/14/68.Redis事务/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="https://raw.githubusercontent.com/YangAnLin/images/master/20200826195042.jpeg" alt=""></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 开启事务,设定事务的开启位置，此指令执行后，后续的所有指令均加入到事务中</span></span><br><span class="line">multi</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 执行提交事务,加入事务的命令暂时到任务队列中，并没有立即执行，只有执行<span class="built_in">exec</span>命令才开始执行</span></span><br><span class="line">exec</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 取消事务,终止当前事务定义，发生在multi之后，<span class="built_in">exec</span>之前</span></span><br><span class="line">discard</span><br></pre></td></tr></table></figure>
+
+<h2 id="事务的工作流程"><a href="#事务的工作流程" class="headerlink" title="事务的工作流程"></a>事务的工作流程</h2><p><img src="https://raw.githubusercontent.com/YangAnLin/images/master/20200826195056.png" alt=""></p>
+<h2 id="事务的注意事项"><a href="#事务的注意事项" class="headerlink" title="事务的注意事项"></a>事务的注意事项</h2><ul>
+<li>语法错误<br>指命令书写格式有误</li>
+<li>处理结果<br>如果定义的事务中所包含的命令存在语法错误，整体事务中所有命令均不会被执行。包括那些语法正确的命令</li>
+</ul>
+<hr>
+<ul>
+<li>运行错误<br>指命令格式正确，但是无法正常的执行。例如对list进行incr操作</li>
+<li>处理结果<br>能够正确运行的命令会执行，运行错误的命令不会执行<br>注意：已经执行完毕的命令对应的数据不会自动回滚，需要程序员自己在代码中实现回滚。</li>
+</ul>
+<h3 id="手动进行事务回滚-基本没法用"><a href="#手动进行事务回滚-基本没法用" class="headerlink" title="手动进行事务回滚(基本没法用)"></a>手动进行事务回滚(基本没法用)</h3><ul>
+<li>记录操作过程中被影响的数据之前的状态<br>单数据：string<br>多数据：hash,list,set,zset</li>
+<li>设置指令恢复所有的被修改的项<br>单数据：直接set（注意周边属性，例如时效）<br>多数据：修改对应值或整体克隆复制</li>
+</ul>
+<h2 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 对key添加监视锁，在执行<span class="built_in">exec</span>前如果key发生了变化，终止事务执行</span></span><br><span class="line">watch key1 [key2…]</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 取消对所有key的监视</span></span><br><span class="line">unwatch</span><br></pre></td></tr></table></figure>
+
+<h2 id="分布式锁"><a href="#分布式锁" class="headerlink" title="分布式锁"></a>分布式锁</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 加锁</span></span><br><span class="line">setnx lock-key value</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 设置超时时间</span></span><br><span class="line">expire lock-key second</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 删除锁</span></span><br><span class="line">dek lock-key</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>利用setnx命令的返回值特征，有值则返回设置失败，无值则返回设置成功</li>
+<li>对于返回设置成功的，拥有控制权，进行下一步的具体业务操作</li>
+<li>对于返回设置失败的，不具有控制权，排队或等待<br>操作完毕通过<strong>del</strong>操作释放锁</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://yanganlin.com/2020/08/14/69.Redis%E5%88%A0%E9%99%A4%E7%AD%96%E7%95%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1212,97 +1318,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://yanganlin.com/2019/07/02/56.Redis%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Anthony">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="木木在唱歌">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/07/02/56.Redis%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85/" class="post-title-link" itemprop="url">Redis集群安装</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2019-07-02 20:55:00" itemprop="dateCreated datePublished" datetime="2019-07-02T20:55:00+08:00">2019-07-02</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-            </span>
-
-          
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Disqus：</span>
-    
-    <a title="disqus" href="/2019/07/02/56.Redis%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85/#disqus_thread" itemprop="discussionUrl">
-      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/07/02/56.Redis集群安装/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>看了几年前的Redis集群安装,那还是3.4的Redis,恍如时光  </p>
-<p>在Github上下载了一个项目,spring也没有用上,各种都是那人自己手动封装,包括解析xml,牛逼是牛逼,倒是跑起来也是贼麻烦的,一直卡在Redis的集群里,本来想让公司的运维装个Redis集群直接让我用, 结过,弄了两次,代码连接redis一直报错</p>
-<p>也不太想麻烦别人了,就自己临时搭一个,还是招这几年前的笔记,哈哈哈,有点怀恋</p>
-<p><img src="https://cdn.jsdelivr.net/gh/YangAnLin/images/copy_20201213154313.jpeg" alt=""></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/07/02/56.Redis%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1372,20 +1387,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">29</span>
+          <span class="site-state-item-count">30</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-count">27</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1412,7 +1427,7 @@
 <div class="copyright">
   
   &copy; 2016 – 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
